@@ -1,95 +1,49 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import React, { useEffect, useState } from "react";
+import { Box, Paper, Grid } from "@mui/material";
+import FormularioJogo from "./pages/formulario";
+import AdicionarJogador from "./pages/add_player";
+import TabelaJogadores from "./pages/tabela_jogadores";
+
+const jogadoresIniciais = [];
+
+const PaperContainer = ({ children }) => (
+  <Paper sx={{ minWidth: "30%", m: "2em 1em 2em", p: "1em" }} elevation={12}>
+    {children}
+  </Paper>
+);
 
 export default function Home() {
+  const [data, setData] = useState(() => {
+    // Tenta recuperar os jogadores salvos do localStorage quando o componente monta.
+    const oldData = localStorage.getItem("oldData");
+    return oldData ? JSON.parse(oldData) : jogadoresIniciais;
+  });
+
+  useEffect(() => {
+    // Salva os jogadores no localStorage sempre que 'data' mudar.
+    localStorage.setItem("oldData", JSON.stringify(data));
+  }, [data]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <Box display={{ xs: "block", md: "flex" }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <PaperContainer>
+            <TabelaJogadores data={data} setData={setData} />
+          </PaperContainer>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <PaperContainer>
+            <FormularioJogo data={data} setData={setData} />
+          </PaperContainer>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <PaperContainer>
+            <AdicionarJogador data={data} setData={setData} />
+          </PaperContainer>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
