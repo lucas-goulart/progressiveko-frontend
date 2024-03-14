@@ -9,10 +9,10 @@ import {
   Paper,
   IconButton,
 } from "@mui/material";
-import TagFacesIcon from "@mui/icons-material/TagFaces";
-import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import { formatCurrency } from "../functions/format_cuirrency";
+import TelaAux from "./tela_aux";
 
 const TabelaJogadores = ({ data, setData }) => {
   const handleClick = (playerName) => {
@@ -28,16 +28,15 @@ const TabelaJogadores = ({ data, setData }) => {
     }
   };
 
-  return (
+  return data.length > 0 ? (
     <TableContainer component={Paper}>
-      <Table sx={{}} aria-label="simple table">
+      <Table aria-label="simple table">
         <TableHead>
           <TableRow>
             <TableCell>Nome</TableCell>
             <TableCell align="right">Bounty</TableCell>
             <TableCell align="right">Saldo</TableCell>
-            <TableCell align="right">-</TableCell>{" "}
-            {/* Adicionando o cabeçalho para os botões */}
+            <TableCell align="right">-</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -61,6 +60,8 @@ const TabelaJogadores = ({ data, setData }) => {
         </TableBody>
       </Table>
     </TableContainer>
+  ) : (
+    <TelaAux />
   );
 };
 
