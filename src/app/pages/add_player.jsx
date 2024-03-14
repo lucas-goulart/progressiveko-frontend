@@ -49,7 +49,8 @@ export default function AdicionarJogador({ data, setData }) {
         // Atualiza apenas o bounty do jogador existente
         const updatedData = [...data];
         updatedData[indexJogadorExistente].bounty = bounty; // Atualiza o bounty
-        setData(updatedData); // Atualiza o estado data com o novo array
+        setData(updatedData);
+        // Atualiza o estado data com o novo array
       } else {
         // O jogador existe e tem um bounty maior que 0
         alert(`Esse jogador já existe e tem um bounty!`);

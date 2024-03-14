@@ -17,16 +17,22 @@ const PaperContainer = ({ children }) => (
 );
 
 export default function Home() {
-  const [data, setData] = useState(() => {
-    // Tenta recuperar os jogadores salvos do localStorage quando o componente monta.
-    const oldData = localStorage.getItem("oldData");
-    return oldData ? JSON.parse(oldData) : jogadoresIniciais;
-  });
+  const [data, setDataReal] = useState(jogadoresIniciais);
+
+  function setData(data) {
+    setDataReal(data);
+    localStorage.setItem("oldData", JSON.stringify(data));
+  }
 
   useEffect(() => {
-    // Salva os jogadores no localStorage sempre que 'data' mudar.
-    localStorage.setItem("oldData", JSON.stringify(data));
-  }, [data]);
+    // Certifica-se de que este código só executa no lado do cliente
+    if (typeof window !== "undefined") {
+      const oldData = localStorage.getItem("oldData");
+      if (oldData) {
+        setData(JSON.parse(oldData));
+      }
+    }
+  }, []);
 
   const [showInfo, setShowInfo] = useState(false);
 
