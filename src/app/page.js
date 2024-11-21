@@ -157,6 +157,12 @@ function App() {
     }
   };
 
+  // Adiciona a opção de fechar o Dialog sem inserir um valor
+  const handleInitialBountyCancel = () => {
+    setIsInitialBountyDialogOpen(false);
+    setInitialBounty("");
+  };
+
   const handleAddPlayer = () => {
     if (!playerName || playerName.trim() === "") {
       alert("Por favor, insira o nome do jogador.");
@@ -173,11 +179,16 @@ function App() {
             ? { ...player, bounty: parseFloat(initialBounty) }
             : player
         );
-        setPlayers(updatedPlayers);
+
+        // Log detalhado
         setLog([
           ...log,
-          `Jogador ${playerName} reentrou com bounty R$${parseFloat(initialBounty).toFixed(2)}`,
+          `Reentrada do jogador ${playerName}: Bounty anterior: R$${existingPlayer.bounty.toFixed(
+            2
+          )}, Bounty atual: R$${initialBounty.toFixed(2)}.`,
         ]);
+
+        setPlayers(updatedPlayers);
       } else {
         alert("Jogador já está no torneio.");
       }
@@ -190,9 +201,11 @@ function App() {
       };
       setPlayers([...players, newPlayer]);
       setPlayerNames([...new Set([...playerNames, playerName])]);
+
+      // Log detalhado
       setLog([
         ...log,
-        `Jogador ${playerName} registrado com bounty R$${parseFloat(initialBounty).toFixed(2)}`,
+        `Jogador ${playerName} registrado com bounty R$${initialBounty.toFixed(2)}.`,
       ]);
     }
 
@@ -214,15 +227,17 @@ function App() {
       return;
     }
 
-    const eliminatedPlayer = players.find((player) => player.name === eliminatedPlayerName);
+    const eliminatedPlayer = players.find(
+      (player) => player.name === eliminatedPlayerName
+    );
 
     if (!eliminatedPlayer || eliminatedPlayer.bounty === 0) {
       alert("Jogador eliminado não está no torneio.");
       return;
     }
 
-    const eliminators = players.filter(
-      (player) => eliminatorNames.includes(player.name)
+    const eliminators = players.filter((player) =>
+      eliminatorNames.includes(player.name)
     );
 
     const bountyPerEliminator = eliminatedPlayer.bounty / eliminatorNames.length;
@@ -242,16 +257,31 @@ function App() {
       return player;
     });
 
-    setPlayers(updatedPlayers);
+    // Log detalhado
+    let logEntry = `Eliminação de ${eliminatedPlayerName} por ${eliminatorNames.join(
+      ", "
+    )}.\n`;
 
-    setLog([
-      ...log,
-      `Jogador ${eliminatedPlayerName} foi eliminado por ${eliminatorNames.join(
-        ", "
-      )}. Bounty de R$${eliminatedPlayer.bounty.toFixed(
+    logEntry += `Bounty do eliminado antes: R$${eliminatedPlayer.bounty.toFixed(
+      2
+    )}, após: R$0.00.\n`;
+
+    eliminators.forEach((eliminator) => {
+      const previousBounty = eliminator.bounty;
+      const previousBalance = eliminator.balance;
+      const bountyShare = bountyPerEliminator / 2;
+
+      logEntry += `Eliminador ${eliminator.name}: Bounty antes: R$${previousBounty.toFixed(
         2
-      )} distribuído igualmente.`,
-    ]);
+      )}, após: R$${(previousBounty + bountyShare).toFixed(
+        2
+      )}; Saldo antes: R$${previousBalance.toFixed(
+        2
+      )}, após: R$${(previousBalance + bountyShare).toFixed(2)}.\n`;
+    });
+
+    setPlayers(updatedPlayers);
+    setLog([...log, logEntry]);
 
     // Resetar formulário de eliminação
     setEliminatedPlayerName(null);
@@ -285,11 +315,30 @@ function App() {
     const updatedPlayers = players.map((player) =>
       player.name === editingPlayerName ? editedPlayerData : player
     );
+
+    // Log detalhado das mudanças
+    const originalPlayer = players.find(
+      (player) => player.name === editingPlayerName
+    );
+    let logEntry = `Dados do jogador ${editingPlayerName} atualizados.\n`;
+
+    if (originalPlayer.name !== editedPlayerData.name) {
+      logEntry += `Nome: "${originalPlayer.name}" -> "${editedPlayerData.name}".\n`;
+    }
+    if (originalPlayer.bounty !== editedPlayerData.bounty) {
+      logEntry += `Bounty: R$${originalPlayer.bounty.toFixed(
+        2
+      )} -> R$${editedPlayerData.bounty.toFixed(2)}.\n`;
+    }
+    if (originalPlayer.balance !== editedPlayerData.balance) {
+      logEntry += `Saldo: R$${originalPlayer.balance.toFixed(
+        2
+      )} -> R$${editedPlayerData.balance.toFixed(2)}.\n`;
+    }
+
     setPlayers(updatedPlayers);
-    setLog([
-      ...log,
-      `Dados do jogador ${editingPlayerName} atualizados.`,
-    ]);
+    setLog([...log, logEntry]);
+
     setEditingPlayerName(null);
     setEditedPlayerData({});
   };
@@ -330,11 +379,7 @@ function App() {
 
       {/** Botão para resetar o site */}
       <div style={{ marginTop: 10 }}>
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={handleReset}
-        >
+        <Button variant="outlined" color="secondary" onClick={handleReset}>
           Reiniciar Site
         </Button>
       </div>
@@ -347,11 +392,15 @@ function App() {
             label="Bounty Inicial (R$)"
             type="number"
             value={initialBounty || ""}
-            onChange={(e) => setInitialBounty(parseFloat(e.target.value))}
+            onChange={(e) => {
+              const value = parseFloat(e.target.value);
+              setInitialBounty(isNaN(value) ? "" : value);
+            }}
             fullWidth
           />
         </DialogContent>
         <DialogActions>
+          <Button onClick={handleInitialBountyCancel}>Cancelar</Button>
           <Button onClick={handleInitialBountySubmit}>Confirmar</Button>
         </DialogActions>
       </Dialog>
@@ -368,7 +417,9 @@ function App() {
           onInputChange={(event, newInputValue) => {
             setPlayerName(newInputValue);
           }}
-          isOptionEqualToValue={(option, value) => option === value || value === null}
+          isOptionEqualToValue={(option, value) =>
+            option === value || value === null
+          }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -395,7 +446,9 @@ function App() {
           onChange={(event, newValue) => {
             setEliminatedPlayerName(newValue);
           }}
-          isOptionEqualToValue={(option, value) => option === value || value === null}
+          isOptionEqualToValue={(option, value) =>
+            option === value || value === null
+          }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -412,7 +465,9 @@ function App() {
           onChange={(event, newValue) => {
             setEliminatorNames(newValue);
           }}
-          isOptionEqualToValue={(option, value) => option === value || value === null}
+          isOptionEqualToValue={(option, value) =>
+            option === value || value === null
+          }
           renderInput={(params) => (
             <TextField
               {...params}
@@ -540,7 +595,12 @@ function App() {
       <div style={{ marginTop: 20 }}>
         <Typography variant="h6">Log de Eventos</Typography>
         {log.map((entry, index) => (
-          <Typography key={index}>{entry}</Typography>
+          <Typography
+            key={index}
+            style={{ whiteSpace: "pre-line", marginBottom: 10 }}
+          >
+            {entry}
+          </Typography>
         ))}
       </div>
     </div>
