@@ -91,60 +91,66 @@ import {
 } from "@mui/material";
 
 function App() {
-  const [initialBounty, setInitialBounty] = useState(() => {
-    const savedBounty = localStorage.getItem("initialBounty");
-    return savedBounty ? parseFloat(savedBounty) : "";
-  });
+  const [initialBounty, setInitialBounty] = useState("");
+  const [players, setPlayers] = useState([]);
+  const [log, setLog] = useState([]);
 
-  const [players, setPlayers] = useState(() => {
-    const savedPlayers = localStorage.getItem("players");
-    return savedPlayers ? JSON.parse(savedPlayers) : [];
-  });
+  const [isInitialBountyDialogOpen, setIsInitialBountyDialogOpen] = useState(true);
 
-  const [log, setLog] = useState(() => {
-    const savedLog = localStorage.getItem("log");
-    return savedLog ? JSON.parse(savedLog) : [];
-  });
+  const [playerNames, setPlayerNames] = useState([]);
 
-  const [isInitialBountyDialogOpen, setIsInitialBountyDialogOpen] = useState(
-    initialBounty === ""
-  );
+  const [sortConfig, setSortConfig] = useState({ key: "name", direction: "asc" });
 
-  const [playerNames, setPlayerNames] = useState(() => {
-    const names = players.map((player) => player.name);
-    return [...new Set(names)];
-  });
-
-  const [sortConfig, setSortConfig] = useState({
-    key: "name",
-    direction: "asc",
-  });
-
-  const [playerName, setPlayerName] = useState("");
-  const [eliminatedPlayerName, setEliminatedPlayerName] = useState("");
+  const [playerName, setPlayerName] = useState(null);
+  const [eliminatedPlayerName, setEliminatedPlayerName] = useState(null);
   const [eliminatorNames, setEliminatorNames] = useState([]);
 
   const [editingPlayerName, setEditingPlayerName] = useState(null);
   const [editedPlayerData, setEditedPlayerData] = useState({});
 
-  // Salva no localStorage sempre que players ou log mudam
+  // Carregar dados do localStorage após a montagem do componente
   useEffect(() => {
-    localStorage.setItem("players", JSON.stringify(players));
-  }, [players]);
+    if (typeof window !== "undefined") {
+      const savedBounty = localStorage.getItem("initialBounty");
+      const savedPlayers = localStorage.getItem("players");
+      const savedLog = localStorage.getItem("log");
+
+      if (savedBounty) {
+        setInitialBounty(parseFloat(savedBounty));
+        setIsInitialBountyDialogOpen(false);
+      }
+
+      if (savedPlayers) {
+        const parsedPlayers = JSON.parse(savedPlayers);
+        setPlayers(parsedPlayers);
+        setPlayerNames([...new Set(parsedPlayers.map((player) => player.name))]);
+      }
+
+      if (savedLog) {
+        setLog(JSON.parse(savedLog));
+      }
+    }
+  }, []);
+
+  // Salvar dados no localStorage quando os estados mudarem
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("players", JSON.stringify(players));
+      localStorage.setItem("log", JSON.stringify(log));
+    }
+  }, [players, log]);
 
   useEffect(() => {
-    localStorage.setItem("log", JSON.stringify(log));
-  }, [log]);
-
-  useEffect(() => {
-    if (initialBounty !== "") {
+    if (typeof window !== "undefined" && initialBounty !== "") {
       localStorage.setItem("initialBounty", initialBounty.toString());
     }
   }, [initialBounty]);
 
   const handleInitialBountySubmit = () => {
     if (initialBounty > 0) {
-      localStorage.setItem("initialBounty", initialBounty.toString());
+      if (typeof window !== "undefined") {
+        localStorage.setItem("initialBounty", initialBounty.toString());
+      }
       setIsInitialBountyDialogOpen(false);
     } else {
       alert("Por favor, insira um valor válido para o bounty inicial.");
@@ -152,7 +158,7 @@ function App() {
   };
 
   const handleAddPlayer = () => {
-    if (playerName.trim() === "") {
+    if (!playerName || playerName.trim() === "") {
       alert("Por favor, insira o nome do jogador.");
       return;
     }
@@ -170,9 +176,7 @@ function App() {
         setPlayers(updatedPlayers);
         setLog([
           ...log,
-          `Jogador ${playerName} reentrou com bounty R$${parseFloat(
-            initialBounty
-          ).toFixed(2)}`,
+          `Jogador ${playerName} reentrou com bounty R$${parseFloat(initialBounty).toFixed(2)}`,
         ]);
       } else {
         alert("Jogador já está no torneio.");
@@ -188,17 +192,15 @@ function App() {
       setPlayerNames([...new Set([...playerNames, playerName])]);
       setLog([
         ...log,
-        `Jogador ${playerName} registrado com bounty R$${parseFloat(
-          initialBounty
-        ).toFixed(2)}`,
+        `Jogador ${playerName} registrado com bounty R$${parseFloat(initialBounty).toFixed(2)}`,
       ]);
     }
 
-    setPlayerName("");
+    setPlayerName(null);
   };
 
   const handleElimination = () => {
-    if (eliminatedPlayerName.trim() === "") {
+    if (!eliminatedPlayerName || eliminatedPlayerName.trim() === "") {
       alert("Por favor, selecione o jogador eliminado.");
       return;
     }
@@ -212,21 +214,18 @@ function App() {
       return;
     }
 
-    const eliminatedPlayer = players.find(
-      (player) => player.name === eliminatedPlayerName
-    );
+    const eliminatedPlayer = players.find((player) => player.name === eliminatedPlayerName);
 
     if (!eliminatedPlayer || eliminatedPlayer.bounty === 0) {
       alert("Jogador eliminado não está no torneio.");
       return;
     }
 
-    const eliminators = players.filter((player) =>
-      eliminatorNames.includes(player.name)
+    const eliminators = players.filter(
+      (player) => eliminatorNames.includes(player.name)
     );
 
-    const bountyPerEliminator =
-      eliminatedPlayer.bounty / eliminatorNames.length;
+    const bountyPerEliminator = eliminatedPlayer.bounty / eliminatorNames.length;
 
     const updatedPlayers = players.map((player) => {
       if (player.name === eliminatedPlayerName) {
@@ -255,7 +254,7 @@ function App() {
     ]);
 
     // Resetar formulário de eliminação
-    setEliminatedPlayerName("");
+    setEliminatedPlayerName(null);
     setEliminatorNames([]);
   };
 
@@ -287,7 +286,10 @@ function App() {
       player.name === editingPlayerName ? editedPlayerData : player
     );
     setPlayers(updatedPlayers);
-    setLog([...log, `Dados do jogador ${editingPlayerName} atualizados.`]);
+    setLog([
+      ...log,
+      `Dados do jogador ${editingPlayerName} atualizados.`,
+    ]);
     setEditingPlayerName(null);
     setEditedPlayerData({});
   };
@@ -332,8 +334,13 @@ function App() {
           onInputChange={(event, newInputValue) => {
             setPlayerName(newInputValue);
           }}
+          isOptionEqualToValue={(option, value) => option === value || value === null}
           renderInput={(params) => (
-            <TextField {...params} label="Nome do Jogador" variant="outlined" />
+            <TextField
+              {...params}
+              label="Nome do Jogador"
+              variant="outlined"
+            />
           )}
         />
         <Button
@@ -354,6 +361,7 @@ function App() {
           onChange={(event, newValue) => {
             setEliminatedPlayerName(newValue);
           }}
+          isOptionEqualToValue={(option, value) => option === value || value === null}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -370,8 +378,13 @@ function App() {
           onChange={(event, newValue) => {
             setEliminatorNames(newValue);
           }}
+          isOptionEqualToValue={(option, value) => option === value || value === null}
           renderInput={(params) => (
-            <TextField {...params} label="Eliminador(es)" variant="outlined" />
+            <TextField
+              {...params}
+              label="Eliminador(es)"
+              variant="outlined"
+            />
           )}
           style={{ marginTop: 10 }}
         />
