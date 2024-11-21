@@ -299,11 +299,45 @@ function App() {
     setEditedPlayerData({});
   };
 
+  // Função para resetar todos os dados
+  const handleReset = () => {
+    const confirmed = window.confirm(
+      "Tem certeza de que deseja reiniciar o site? Todos os dados serão perdidos."
+    );
+    if (confirmed) {
+      if (typeof window !== "undefined") {
+        localStorage.clear();
+      }
+      setInitialBounty("");
+      setPlayers([]);
+      setLog([]);
+      setPlayerNames([]);
+      setSortConfig({ key: "name", direction: "asc" });
+      setPlayerName(null);
+      setEliminatedPlayerName(null);
+      setEliminatorNames([]);
+      setEditingPlayerName(null);
+      setEditedPlayerData({});
+      setIsInitialBountyDialogOpen(true);
+    }
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <Typography variant="h4">
         Controle de Bounties do Torneio de Poker
       </Typography>
+
+      {/** Botão para resetar o site */}
+      <div style={{ marginTop: 10 }}>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={handleReset}
+        >
+          Reiniciar Site
+        </Button>
+      </div>
 
       {/** Dialogo do Bounty Inicial */}
       <Dialog open={isInitialBountyDialogOpen}>
