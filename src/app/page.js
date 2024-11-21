@@ -76,10 +76,6 @@ import {
   TextField,
   Button,
   Autocomplete,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Table,
   TableBody,
   TableCell,
@@ -94,8 +90,6 @@ function App() {
   const [initialBounty, setInitialBounty] = useState("");
   const [players, setPlayers] = useState([]);
   const [log, setLog] = useState([]);
-
-  const [isInitialBountyDialogOpen, setIsInitialBountyDialogOpen] = useState(true);
 
   const [playerNames, setPlayerNames] = useState([]);
 
@@ -117,7 +111,6 @@ function App() {
 
       if (savedBounty) {
         setInitialBounty(parseFloat(savedBounty));
-        setIsInitialBountyDialogOpen(false);
       }
 
       if (savedPlayers) {
@@ -137,35 +130,18 @@ function App() {
     if (typeof window !== "undefined") {
       localStorage.setItem("players", JSON.stringify(players));
       localStorage.setItem("log", JSON.stringify(log));
-    }
-  }, [players, log]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined" && initialBounty !== "") {
       localStorage.setItem("initialBounty", initialBounty.toString());
     }
-  }, [initialBounty]);
-
-  const handleInitialBountySubmit = () => {
-    if (initialBounty > 0) {
-      if (typeof window !== "undefined") {
-        localStorage.setItem("initialBounty", initialBounty.toString());
-      }
-      setIsInitialBountyDialogOpen(false);
-    } else {
-      alert("Por favor, insira um valor válido para o bounty inicial.");
-    }
-  };
-
-  // Adiciona a opção de fechar o Dialog sem inserir um valor
-  const handleInitialBountyCancel = () => {
-    setIsInitialBountyDialogOpen(false);
-    setInitialBounty("");
-  };
+  }, [players, log, initialBounty]);
 
   const handleAddPlayer = () => {
     if (!playerName || playerName.trim() === "") {
       alert("Por favor, insira o nome do jogador.");
+      return;
+    }
+
+    if (initialBounty === "" || isNaN(initialBounty) || initialBounty <= 0) {
+      alert("Por favor, defina um valor válido para o bounty inicial no final da página.");
       return;
     }
 
@@ -185,7 +161,7 @@ function App() {
           ...log,
           `Reentrada do jogador ${playerName}: Bounty anterior: R$${existingPlayer.bounty.toFixed(
             2
-          )}, Bounty atual: R$${initialBounty.toFixed(2)}.`,
+          )}, Bounty atual: R$${parseFloat(initialBounty).toFixed(2)}.`,
         ]);
 
         setPlayers(updatedPlayers);
@@ -205,7 +181,7 @@ function App() {
       // Log detalhado
       setLog([
         ...log,
-        `Jogador ${playerName} registrado com bounty R$${initialBounty.toFixed(2)}.`,
+        `Jogador ${playerName} registrado com bounty R$${parseFloat(initialBounty).toFixed(2)}.`,
       ]);
     }
 
@@ -367,7 +343,6 @@ function App() {
       setEliminatorNames([]);
       setEditingPlayerName(null);
       setEditedPlayerData({});
-      setIsInitialBountyDialogOpen(true);
     }
   };
 
@@ -376,34 +351,6 @@ function App() {
       <Typography variant="h4">
         Controle de Bounties do Torneio de Poker
       </Typography>
-
-      {/** Botão para resetar o site */}
-      <div style={{ marginTop: 10 }}>
-        <Button variant="outlined" color="secondary" onClick={handleReset}>
-          Reiniciar Site
-        </Button>
-      </div>
-
-      {/** Dialogo do Bounty Inicial */}
-      <Dialog open={isInitialBountyDialogOpen}>
-        <DialogTitle>Insira o Valor do Bounty Inicial</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Bounty Inicial (R$)"
-            type="number"
-            value={initialBounty || ""}
-            onChange={(e) => {
-              const value = parseFloat(e.target.value);
-              setInitialBounty(isNaN(value) ? "" : value);
-            }}
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleInitialBountyCancel}>Cancelar</Button>
-          <Button onClick={handleInitialBountySubmit}>Confirmar</Button>
-        </DialogActions>
-      </Dialog>
 
       {/** Cadastro de Jogadores */}
       <div style={{ marginTop: 20 }}>
@@ -603,8 +550,31 @@ function App() {
           </Typography>
         ))}
       </div>
+
+      {/** Input para o Bounty Inicial e Botão de Reset */}
+      <div style={{ marginTop: 20 }}>
+        <TextField
+          label="Bounty Inicial (R$)"
+          type="number"
+          value={initialBounty}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            setInitialBounty(isNaN(value) ? "" : value);
+          }}
+          fullWidth
+        />
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={handleReset}
+          style={{ marginTop: 10 }}
+        >
+          Reiniciar Site
+        </Button>
+      </div>
     </div>
   );
 }
 
 export default App;
+
